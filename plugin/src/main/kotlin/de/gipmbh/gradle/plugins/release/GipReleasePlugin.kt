@@ -6,6 +6,7 @@ package de.gipmbh.gradle.plugins.release
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.provider.Property
+import org.gradle.plugins.ide.eclipse.internal.AfterEvaluateHelper
 import pl.allegro.tech.build.axion.release.domain.RepositoryConfig
 import pl.allegro.tech.build.axion.release.domain.TagNameSerializationConfig
 import pl.allegro.tech.build.axion.release.domain.VersionConfig
@@ -17,8 +18,9 @@ class GipReleasePlugin : Plugin<Project> {
 
         val versionConfigExtension: VersionConfigExtension =
             project.extensions.create("releaseBranch", VersionConfigExtension::class.java)
-        versionConfigExtension.tagPrefix.convention("V")
 
+        versionConfigExtension.tagPrefix.convention("V")
+    project.afterEvaluate {
         project.extensions.configure<VersionConfig>("scmVersion") { versionConfig: VersionConfig ->
             versionConfig.repository { repositoryConfig: RepositoryConfig ->
                 repositoryConfig.directory.set(project.rootProject.file("../"))
@@ -36,7 +38,7 @@ class GipReleasePlugin : Plugin<Project> {
             }
 
             versionConfigExtension.version = versionConfig.version
-
+        }
 //            if (incrementer.isPresent) {
 //                versionIncrementer(leastVersionIncrementer(incrementer.get(), leastVersion.get()))
 //            } else {
