@@ -1,38 +1,17 @@
 package de.gipmbh.gradle.plugins.release
 
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Optional
 import java.io.File
 
 abstract class VersionConfigExtension {
 
-    @set:Optional
-    abstract var version: String
-
-    @set:Input
-    @set:Optional
-    abstract var leastVersion: Property<String>
-
-    @set:Input
-    @set:Optional
-    abstract var tagPrefix: Property<String>
-
-    @set:Input
-    @set:Optional
-    abstract var ignoreUncommittedChanges: Property<Boolean>
-
-    @set:Input
-    @set:Optional
-    abstract var useHighestVersion: Property<Boolean>
-
-    @set:Input
-    @set:Optional
-    abstract var incrementer: Property<String>
-
-    @set:Input
-    @set:Optional
-    abstract var gitDirectory: Property<File>
+    abstract val version: Property<String>
+    abstract val leastVersion: Property<String>
+    abstract val tagPrefix: Property<String>
+    abstract val ignoreUncommittedChanges: Property<Boolean>
+    abstract val useHighestVersion: Property<Boolean>
+    abstract val incrementer: Property<String>
+    abstract val gitDirectory: Property<File>
 
     init {
         tagPrefix.convention("V")

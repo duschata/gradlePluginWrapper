@@ -5,25 +5,22 @@ package de.gipmbh.gradle.plugins.release
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.provider.Property
-import pl.allegro.tech.build.axion.release.domain.RepositoryConfig
-import pl.allegro.tech.build.axion.release.domain.TagNameSerializationConfig
 import pl.allegro.tech.build.axion.release.domain.VersionConfig
 
 class GipReleasePlugin : Plugin<Project> {
     override fun apply(project: Project) {
 
-        project.apply(mapOf("plugin" to "pl.allegro.tech.build.axion-release"))
+        project.plugins.apply("pl.allegro.tech.build.axion-release")
 
         val versionConfigExtension: VersionConfigExtension =
             project.extensions.create("releaseBranch", VersionConfigExtension::class.java)
 
-        project.extensions.configure<VersionConfig>("scmVersion") { versionConfig: VersionConfig ->
-            versionConfig.repository { repositoryConfig: RepositoryConfig ->
-                repositoryConfig.directory.set(project.rootProject.file("../"))
+        project.extensions.configure<VersionConfig>("scmVersion") { versionConfig ->
+            versionConfig.repository { repositoryConfig ->
+                repositoryConfig.directory.set(project.rootProject.layout.projectDirectory.dir("../"))
             }
-            versionConfig.tag { tagNameSerializationConfig: TagNameSerializationConfig ->
-                tagNameSerializationConfig.prefix.set(versionConfigExtension.tagPrefix.get())
+            versionConfig.tag { tagNameSerializationConfig ->
+                tagNameSerializationConfig.prefix.set(versionConfigExtension.tagPrefix)
                 tagNameSerializationConfig.initialVersion { _, _ -> "1.0.0" }
             }
             versionConfig.ignoreUncommittedChanges.set(false) // TODO configurable
@@ -34,7 +31,7 @@ class GipReleasePlugin : Plugin<Project> {
                 versionConfig.checks { versionConfig.checks.uncommittedChanges.set(true) }
             }
 
-            versionConfigExtension.version = versionConfig.version
+            versionConfigExtension.version.set(versionConfig.version)
 
 //            if (incrementer.isPresent) {
 //                versionIncrementer(leastVersionIncrementer(incrementer.get(), leastVersion.get()))
