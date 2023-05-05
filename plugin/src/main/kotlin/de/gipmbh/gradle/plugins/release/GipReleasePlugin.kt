@@ -17,6 +17,7 @@ class GipReleasePlugin : Plugin<Project> {
 
         val versionConfigExtension: VersionConfigExtension =
             project.extensions.create("releaseBranch", VersionConfigExtension::class.java)
+        versionConfigExtension.tagPrefix.convention("V")
 
         project.extensions.configure<VersionConfig>("scmVersion") { versionConfig: VersionConfig ->
             versionConfig.repository { repositoryConfig: RepositoryConfig ->

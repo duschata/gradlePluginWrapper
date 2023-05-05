@@ -7,34 +7,31 @@ import java.io.File
 
 abstract class VersionConfigExtension {
 
-    @set:Optional
+    @get:Optional
     abstract var version: String
 
-    @set:Input
-    @set:Optional
-    abstract var leastVersion: Property<String>
+    @get:Input
+    @get:Optional
+    abstract val leastVersion: Property<String>
 
-    @set:Input
-    @set:Optional
-    abstract var tagPrefix: Property<String>
+    @get:Input
+    @get:Optional
+    abstract val tagPrefix: Property<String>
 
-    @set:Input
-    @set:Optional
-    abstract var ignoreUncommittedChanges: Property<Boolean>
+    @get:Input
+    @get:Optional
+    abstract val ignoreUncommittedChanges: Property<Boolean>
 
-    @set:Input
-    @set:Optional
-    abstract var useHighestVersion: Property<Boolean>
+    @get:Input
+    @get:Optional
+    abstract val useHighestVersion: Property<Boolean>
 
-    @set:Input
-    @set:Optional
-    abstract var incrementer: Property<String>
+    @get:Input
+    @get:Optional
+    abstract val incrementer: Property<String>
 
-    @set:Input
-    @set:Optional
-    abstract var gitDirectory: Property<File>
+    @get:Input
+    @get:Optional
+    abstract val gitDirectory: Property<File>
 
-    init {
-        tagPrefix.convention("V")
-    }
 }
