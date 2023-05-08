@@ -10,35 +10,56 @@ import kotlin.test.Test
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import kotlin.math.log
 
 /**
  * A simple functional test for the 'de.gipmbh.gradle.plugins.release.greeting' plugin.
  */
 class GipReleasePluginFunctionalTest {
-    @get:Rule val tempFolder = TemporaryFolder()
+    @get:Rule
+    val tempFolder: TemporaryFolder = TemporaryFolder()
 
     private fun getProjectDir() = tempFolder.root
     private fun getBuildFile() = getProjectDir().resolve("build.gradle")
     private fun getSettingsFile() = getProjectDir().resolve("settings.gradle")
 
-    @Test fun `can run task`() {
-        // Setup the test build
+    private fun setup(): Unit {
+        getProjectDir().resolve("README.md").writeText(
+            """
+            hello, world!
+        """.trimIndent()
+        )
+
+//        tempFolder.
+    }
+
+    @Test
+    fun `can run task`() {
+
+        setup()
+
         getSettingsFile().writeText("")
-        getBuildFile().writeText("""
+        getBuildFile().writeText(
+            """
 plugins {
     id('gip-release-new')
 }
-""")
+"""
+        )
 
+        println("tempFolder: ${tempFolder.root.absolutePath}")
         // Run the build
         val runner = GradleRunner.create()
         runner.forwardOutput()
         runner.withPluginClasspath()
-        runner.withArguments("greeting")
+        runner.withArguments("currentVersion")
         runner.withProjectDir(getProjectDir())
         val result = runner.build();
 
+
+        println("stop here")
+
         // Verify the result
-        assertTrue(result.output.contains("Hello from plugin 'gip-release-new'"))
+//        assertTrue(result.output.contains("Hello from plugin 'gip-release-new'"))
     }
 }

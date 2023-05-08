@@ -20,25 +20,29 @@ class GipReleasePlugin : Plugin<Project> {
             project.extensions.create("releaseBranch", VersionConfigExtension::class.java)
 
         versionConfigExtension.tagPrefix.convention("V")
-    project.afterEvaluate {
-        project.extensions.configure<VersionConfig>("scmVersion") { versionConfig: VersionConfig ->
-            versionConfig.repository { repositoryConfig: RepositoryConfig ->
-                repositoryConfig.directory.set(project.rootProject.file("../"))
-            }
-            versionConfig.tag { tagNameSerializationConfig: TagNameSerializationConfig ->
-                tagNameSerializationConfig.prefix.set(versionConfigExtension.tagPrefix.get())
-                tagNameSerializationConfig.initialVersion { _, _ -> "1.0.0" }
-            }
-            versionConfig.ignoreUncommittedChanges.set(false) // TODO configurable
-            versionConfig.useHighestVersion.set(false) //TODO: configurable
 
-            versionConfig.versionCreator("versionWithBranch")
-            if (project.hasProperty("ignoreUncommitted")) {
-                versionConfig.checks { versionConfig.checks.uncommittedChanges.set(true) }
+        project.afterEvaluate {
+//            val staticVersionConfig: VersionConfig? = project.extensions.findByType(VersionConfig::class.java)
+
+            project.extensions.configure<VersionConfig>("scmVersion") { versionConfig: VersionConfig ->
+                versionConfig.repository { repositoryConfig: RepositoryConfig ->
+                    repositoryConfig.directory.set(project.rootProject.file("../"))
+                }
+                versionConfig.tag { tagNameSerializationConfig: TagNameSerializationConfig ->
+                    tagNameSerializationConfig.prefix.set(versionConfigExtension.tagPrefix.get())
+                    tagNameSerializationConfig.initialVersion { _, _ -> "1.0.0" }
+                }
+                versionConfig.ignoreUncommittedChanges.set(false) // TODO configurable
+                versionConfig.useHighestVersion.set(false) //TODO: configurable
+
+                versionConfig.versionCreator("versionWithBranch")
+                if (project.hasProperty("ignoreUncommitted")) {
+                    versionConfig.checks { versionConfig.checks.uncommittedChanges.set(true) }
+                }
+
+                versionConfigExtension.version = versionConfig.version
             }
 
-            versionConfigExtension.version = versionConfig.version
-        }
 //            if (incrementer.isPresent) {
 //                versionIncrementer(leastVersionIncrementer(incrementer.get(), leastVersion.get()))
 //            } else {
