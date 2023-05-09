@@ -29,8 +29,6 @@ class GipReleasePluginFunctionalTest {
             hello, world!
         """.trimIndent()
         )
-
-//        tempFolder.
     }
 
     @Test
@@ -41,10 +39,10 @@ class GipReleasePluginFunctionalTest {
         getSettingsFile().writeText("")
         getBuildFile().writeText(
             """
-plugins {
-    id('gip-release-new')
-}
-"""
+                plugins {
+                    id('gip-release-new')
+                }
+                """.trimIndent()
         )
 
         println("tempFolder: ${tempFolder.root.absolutePath}")
