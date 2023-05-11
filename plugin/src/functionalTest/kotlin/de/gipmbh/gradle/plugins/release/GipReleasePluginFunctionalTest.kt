@@ -3,14 +3,13 @@
  */
 package de.gipmbh.gradle.plugins.release
 
-import java.io.File
-import java.nio.file.Files
-import kotlin.test.assertTrue
-import kotlin.test.Test
+import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.InitCommand
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-import kotlin.math.log
+import kotlin.test.Test
+import kotlin.test.assertTrue
 
 /**
  * A simple functional test for the 'de.gipmbh.gradle.plugins.release.greeting' plugin.
@@ -29,6 +28,17 @@ class GipReleasePluginFunctionalTest {
             hello, world!
         """.trimIndent()
         )
+
+        getProjectDir().resolve(".gitignore").writeText(
+            """
+                .gradle
+                build
+            """.trimIndent()
+        )
+
+        val git: Git = InitCommand().setDirectory(getProjectDir()).setInitialBranch("master").call()
+        git.add().addFilepattern(".").call()
+        git.commit().setMessage("init").call()
     }
 
     @Test
@@ -42,10 +52,13 @@ class GipReleasePluginFunctionalTest {
                 plugins {
                     id('gip-release-new')
                 }
+                releaseBranch {
+                    leastVersion.set("2.0.0")
+                }
+                
                 """.trimIndent()
         )
 
-        println("tempFolder: ${tempFolder.root.absolutePath}")
         // Run the build
         val runner = GradleRunner.create()
         runner.forwardOutput()
@@ -55,9 +68,6 @@ class GipReleasePluginFunctionalTest {
         val result = runner.build();
 
 
-        println("stop here")
-
-        // Verify the result
-//        assertTrue(result.output.contains("Hello from plugin 'gip-release-new'"))
+        assertTrue(result.output.contains("Project version: 2.0.0-SNAPSHOT"))
     }
 }
