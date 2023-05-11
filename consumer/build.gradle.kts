@@ -1,9 +1,3 @@
-import com.github.zafarkhaja.semver.Version
-import pl.allegro.tech.build.axion.release.domain.PredefinedVersionIncrementer
-import pl.allegro.tech.build.axion.release.domain.VersionIncrementerContext
-import pl.allegro.tech.build.axion.release.domain.properties.VersionProperties
-import pl.allegro.tech.build.axion.release.domain.scm.ScmPosition
-
 plugins {
     id("java")
     id("gip-release-new")
@@ -11,8 +5,24 @@ plugins {
 }
 
 releaseBranch {
-    tagPrefix.set("Version")
+    directory.set(project.file("../"))
+    leastVersion.set("3.0.0")
+//    incrementer.set("incrementMinor")
 }
+
+version = scmVersion.version
+group = "de.gipmbh.gradle.plugin.gip-release"
+
+println("version: $version")
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            from(components["java"])
+        }
+    }
+}
+
 
 //val incrementer: Property<String> = project.objects.property()
 ////incrementer.set("incrementPatch")
@@ -65,18 +75,3 @@ releaseBranch {
 //        if (parsedLeastVersion > context.currentVersion) parsedLeastVersion else incrementer.apply(context)
 //    }
 //}
-
-
-
-version = scmVersion.version
-group = "de.gipmbh.gradle.plugin.gip-release"
-
-println("version: $version")
-
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["java"])
-        }
-    }
-}
