@@ -78,7 +78,7 @@ class GipReleasePlugin : Plugin<Project> {
             PredefinedVersionIncrementer.versionIncrementerFor(incrementerName.get())
 
         return { context: VersionIncrementerContext ->
-            val parsedLeastVersion: Version = Version.valueOf(leastVersion.get())
+            val parsedLeastVersion: Version = Version.parse(leastVersion.get())
             if (parsedLeastVersion > context.currentVersion) parsedLeastVersion else incrementer.apply(context)
         }
     }
