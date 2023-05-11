@@ -3,77 +3,83 @@
  */
 package de.gipmbh.gradle.plugins.release
 
+import com.github.zafarkhaja.semver.Version
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.provider.Property
-import org.gradle.plugins.ide.eclipse.internal.AfterEvaluateHelper
-import pl.allegro.tech.build.axion.release.domain.RepositoryConfig
-import pl.allegro.tech.build.axion.release.domain.TagNameSerializationConfig
-import pl.allegro.tech.build.axion.release.domain.VersionConfig
+import pl.allegro.tech.build.axion.release.domain.*
+import pl.allegro.tech.build.axion.release.domain.properties.VersionProperties
+
 
 class GipReleasePlugin : Plugin<Project> {
     override fun apply(project: Project) {
 
-        project.apply(mapOf("plugin" to "pl.allegro.tech.build.axion-release"))
+        project.plugins.apply("pl.allegro.tech.build.axion-release")
 
         val versionConfigExtension: VersionConfigExtension =
             project.extensions.create("releaseBranch", VersionConfigExtension::class.java)
 
-        versionConfigExtension.tagPrefix.convention("V")
+        versionConfigExtension.leastVersion.convention("1.0.0")
+//        versionConfigExtension.incrementer.convention("incrementPatch")
 
-        project.afterEvaluate {
-//            val staticVersionConfig: VersionConfig? = project.extensions.findByType(VersionConfig::class.java)
 
-            project.extensions.configure<VersionConfig>("scmVersion") { versionConfig: VersionConfig ->
-                versionConfig.repository { repositoryConfig: RepositoryConfig ->
-                    repositoryConfig.directory.set(project.rootProject.file("../"))
-                }
-                versionConfig.tag { tagNameSerializationConfig: TagNameSerializationConfig ->
-                    tagNameSerializationConfig.prefix.set(versionConfigExtension.tagPrefix.get())
-                    tagNameSerializationConfig.initialVersion { _, _ -> "1.0.0" }
-                }
-                versionConfig.ignoreUncommittedChanges.set(false) // TODO configurable
-                versionConfig.useHighestVersion.set(false) //TODO: configurable
+        versionConfigExtension.directory.convention(
+            project.objects.directoryProperty().convention(project.layout.projectDirectory.dir("./"))
+        )
 
-                versionConfig.versionCreator("versionWithBranch")
-                if (project.hasProperty("ignoreUncommitted")) {
-                    versionConfig.checks { versionConfig.checks.uncommittedChanges.set(true) }
-                }
+        project.extensions.configure("scmVersion") { versionConfig: VersionConfig ->
+            versionConfig.repository { repositoryConfig: RepositoryConfig ->
+                repositoryConfig.directory.set(versionConfigExtension.directory)
+            }
+            versionConfig.tag { tagNameSerializationConfig: TagNameSerializationConfig ->
+                tagNameSerializationConfig.prefix.set(versionConfigExtension.tagPrefix)
+                tagNameSerializationConfig.initialVersion { _, _ -> "1.0.0" }
+            }
+            versionConfig.ignoreUncommittedChanges.set(versionConfigExtension.ignoreUncommittedChanges)
+            versionConfig.useHighestVersion.set(versionConfigExtension.useHighestVersion)
 
-                versionConfigExtension.version = versionConfig.version
+            versionConfig.versionCreator("versionWithBranch")
+
+            if (project.hasProperty("ignoreUncommitted")) {
+                versionConfig.checks { versionConfig.checks.uncommittedChanges.set(true) }
             }
 
-//            if (incrementer.isPresent) {
-//                versionIncrementer(leastVersionIncrementer(incrementer.get(), leastVersion.get()))
-//            } else {
-//                versionIncrementer(leastVersionIncrementer("incrementMinor", leastVersion.get()))
-//                branchVersionIncrementer(
-//                    mapOf(
-//                        "(release/|support/).*" to leastVersionIncrementer(
-//                            "incrementPatch",
-//                            leastVersion.get()
-//                        )
-//                    )
-//                )
-//            }
-//            fun leastVersionIncrementer(
-//                incrementerName: String, leastVersion: String
-//            ): (VersionIncrementerContext) -> Version {
-//                val incrementer: VersionProperties.Incrementer =
-//                    PredefinedVersionIncrementer.versionIncrementerFor(incrementerName)
-//
-//                return { context: VersionIncrementerContext ->
-//                    val parsedLeastVersion: Version = Version.valueOf(leastVersion)
-//                    if (parsedLeastVersion > context.currentVersion) parsedLeastVersion else incrementer.apply(context)
-//                }
-//            }
+
+            if (versionConfigExtension.incrementer.isPresent) {
+                versionConfig.versionIncrementer(
+                    leastVersionIncrementer(
+                        versionConfigExtension.incrementer,
+                        versionConfigExtension.leastVersion
+                    )
+                )
+            } else {
+                versionConfig.versionIncrementer(
+                    leastVersionIncrementer(
+                        project.objects.property(String::class.java).convention("incrementMinor"),
+                        versionConfigExtension.leastVersion
+                    )
+                )
+                versionConfig.branchVersionIncrementer(
+                    mapOf(
+                        "(release/|support/).*" to leastVersionIncrementer(
+                            project.objects.property(String::class.java).convention("incrementPatch"),
+                            versionConfigExtension.leastVersion
+                        )
+                    )
+                )
+            }
         }
+    }
 
-        // Register a task
-        project.tasks.register("greeting") { task ->
-            task.doLast {
-                println("Hello from plugin 'gip-release-new'")
-            }
+    private fun leastVersionIncrementer(
+        incrementerName: Property<String>, leastVersion: Property<String>
+    ): (VersionIncrementerContext) -> Version {
+        val incrementer: VersionProperties.Incrementer =
+            PredefinedVersionIncrementer.versionIncrementerFor(incrementerName.get())
+
+        return { context: VersionIncrementerContext ->
+            val parsedLeastVersion: Version = Version.valueOf(leastVersion.get())
+            if (parsedLeastVersion > context.currentVersion) parsedLeastVersion else incrementer.apply(context)
         }
     }
 }
