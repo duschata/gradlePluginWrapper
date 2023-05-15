@@ -23,7 +23,7 @@ class GipReleasePluginFunctionalTest {
     private fun getBuildFile() = getProjectDir().resolve("build.gradle.kts")
     private fun getSettingsFile() = getProjectDir().resolve("settings.gradle.kts")
 
-    private fun setup(): Unit {
+    private fun setup(vars: String = ""): Unit {
         getProjectDir().resolve("README.md").writeText(
             """
             hello, world!
@@ -37,6 +37,14 @@ class GipReleasePluginFunctionalTest {
             """.trimIndent()
         )
 
+        var readText: String =
+            File("/home/tom/src/gradle/gip-release/consumer/build.gradle.kts").readText(Charsets.UTF_8)
+        readText = readText.replace("// SETVARS", vars)
+
+        getBuildFile().writeText(readText)
+
+        getSettingsFile().writeText("")
+
         val git: Git = InitCommand().setDirectory(getProjectDir()).setInitialBranch("master").call()
         git.add().addFilepattern(".").call()
         git.commit().setMessage("init").call()
@@ -45,14 +53,15 @@ class GipReleasePluginFunctionalTest {
     @Test
     fun `can run task`() {
 
-        setup()
-
-        val readText: String = File("/home/tom/src/gradle/gip-release/consumer/build.gradle.kts").readText(Charsets.UTF_8)
-
-        getSettingsFile().writeText("")
-        getBuildFile().writeText(
-           readText
+        setup(
+            """
+            leastVersion.set("2.0.0")
+            myRepository.set("./")
+        """.trimIndent()
         )
+
+//        getSettingsFile().writeText("")
+//        getBuildFile().writeText("")
 
         // Run the build
         val runner = GradleRunner.create()

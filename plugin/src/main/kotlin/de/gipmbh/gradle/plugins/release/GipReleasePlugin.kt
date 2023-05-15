@@ -6,9 +6,8 @@ package de.gipmbh.gradle.plugins.release
 import com.github.zafarkhaja.semver.Version
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.provider.Property
 import pl.allegro.tech.build.axion.release.domain.*
-import pl.allegro.tech.build.axion.release.domain.properties.VersionProperties
+import pl.allegro.tech.build.axion.release.domain.properties.VersionProperties.Incrementer
 
 
 class GipReleasePlugin : Plugin<Project> {
@@ -16,11 +15,11 @@ class GipReleasePlugin : Plugin<Project> {
 
         project.plugins.apply("pl.allegro.tech.build.axion-release")
 
-        val versionConfigExtension: VersionConfigExtension =
+        val versionConfigExtension =
             project.extensions.create("releaseBranch", VersionConfigExtension::class.java)
 
         versionConfigExtension.leastVersion.convention("1.0.0")
-//        versionConfigExtension.incrementer.convention("incrementPatch")
+        // versionConfigExtension.incrementer.convention("incrementPatch")
 
 
         versionConfigExtension.directory.convention(
@@ -44,41 +43,49 @@ class GipReleasePlugin : Plugin<Project> {
                 versionConfig.checks { versionConfig.checks.uncommittedChanges.set(true) }
             }
 
+//            versionConfigExtension.incrementer.map { incrementerValue ->
+//                incrementerValue.toInt()
+//            }
 
-            if (versionConfigExtension.incrementer.isPresent) {
-                versionConfig.versionIncrementer(
+            versionConfig.versionIncrementer.set(
+                versionConfigExtension.incrementer.map { incrementer ->
                     leastVersionIncrementer(
-                        versionConfigExtension.incrementer,
-                        versionConfigExtension.leastVersion
+                        incrementer,
+                        versionConfigExtension.leastVersion.get()
                     )
+                }.orElse(
+                    versionConfigExtension.leastVersion.map { leastVersion ->
+                        leastVersionIncrementer(
+                            "incrementMinor",
+                            leastVersion
+                        )
+                    }
                 )
-            } else {
-                versionConfig.versionIncrementer(
-                    leastVersionIncrementer(
-                        project.objects.property(String::class.java).convention("incrementMinor"),
-                        versionConfigExtension.leastVersion
-                    )
-                )
-                versionConfig.branchVersionIncrementer(
-                    mapOf(
+            )
+
+            versionConfig.branchVersionIncrementer.putAll(versionConfigExtension.incrementer.map {
+                emptyMap<String, Any>()
+            }.orElse(
+                versionConfigExtension.leastVersion.map { leastVersion ->
+                    mapOf<String, Any>(
                         "(release/|support/).*" to leastVersionIncrementer(
-                            project.objects.property(String::class.java).convention("incrementPatch"),
-                            versionConfigExtension.leastVersion
+                            "incrementPatch",
+                            leastVersion
                         )
                     )
-                )
-            }
+                }
+            ))
         }
     }
 
     private fun leastVersionIncrementer(
-        incrementerName: Property<String>, leastVersion: Property<String>
-    ): (VersionIncrementerContext) -> Version {
-        val incrementer: VersionProperties.Incrementer =
-            PredefinedVersionIncrementer.versionIncrementerFor(incrementerName.get())
+        incrementerName: String, leastVersion: String
+    ): Incrementer {
 
-        return { context: VersionIncrementerContext ->
-            val parsedLeastVersion: Version = Version.parse(leastVersion.get())
+        return Incrementer { context: VersionIncrementerContext ->
+            val incrementer: Incrementer =
+                PredefinedVersionIncrementer.versionIncrementerFor(incrementerName)
+            val parsedLeastVersion: Version = Version.parse(leastVersion)
             if (parsedLeastVersion > context.currentVersion) parsedLeastVersion else incrementer.apply(context)
         }
     }
