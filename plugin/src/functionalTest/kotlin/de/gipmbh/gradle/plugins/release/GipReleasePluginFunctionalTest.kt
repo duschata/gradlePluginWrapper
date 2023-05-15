@@ -8,6 +8,7 @@ import org.eclipse.jgit.api.InitCommand
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -19,8 +20,8 @@ class GipReleasePluginFunctionalTest {
     val tempFolder: TemporaryFolder = TemporaryFolder()
 
     private fun getProjectDir() = tempFolder.root
-    private fun getBuildFile() = getProjectDir().resolve("build.gradle")
-    private fun getSettingsFile() = getProjectDir().resolve("settings.gradle")
+    private fun getBuildFile() = getProjectDir().resolve("build.gradle.kts")
+    private fun getSettingsFile() = getProjectDir().resolve("settings.gradle.kts")
 
     private fun setup(): Unit {
         getProjectDir().resolve("README.md").writeText(
@@ -46,17 +47,11 @@ class GipReleasePluginFunctionalTest {
 
         setup()
 
+        val readText: String = File("/home/tom/src/gradle/gip-release/consumer/build.gradle.kts").readText(Charsets.UTF_8)
+
         getSettingsFile().writeText("")
         getBuildFile().writeText(
-            """
-                plugins {
-                    id('gip-release-new')
-                }
-                releaseBranch {
-                    leastVersion.set("2.0.0")
-                }
-                
-                """.trimIndent()
+           readText
         )
 
         // Run the build
